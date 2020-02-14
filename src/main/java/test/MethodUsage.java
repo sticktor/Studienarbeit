@@ -1,8 +1,8 @@
 package test;
 
 import edu.umd.cs.findbugs.classfile.ClassDescriptor;
+import edu.umd.cs.findbugs.classfile.MethodDescriptor;
 
-import java.beans.MethodDescriptor;
 
 public class MethodUsage implements Usage
 {

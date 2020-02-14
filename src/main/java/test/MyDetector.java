@@ -3,8 +3,10 @@ package test;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
+import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Method;
 
+import javax.crypto.spec.OAEPParameterSpec;
 import java.util.*;
 
 public class MyDetector extends OpcodeStackDetector {
@@ -19,11 +21,17 @@ public class MyDetector extends OpcodeStackDetector {
     static Method method;
     static Class firstParameter;
     static Map<Method, List<Parameter>> parametersPerMethod = new HashMap <>();
-    static Map<Method, Map<Parameter, List<Usage>>> UsagesPerAttributePerMethod;
+    static HashMap<Method, HashMap<Parameter, ArrayList<Usage>>> UsagesPerAttributePerMethod = new HashMap <>();
+    static OpcodeStack.Item item;
     @Override
     public void sawOpcode(int seen) {
         try
         {
+
+            if (seen == Const.INVOKEVIRTUAL)
+            {
+                item = getStack().getStackItem(0);
+            }
             list.add(seen);
             try
             {
@@ -126,6 +134,42 @@ public class MyDetector extends OpcodeStackDetector {
         System.out.println(isMethodCall());
         System.out.println(getClassDescriptorOperand());
         System.out.println(getMethodDescriptorOperand());
+
+        List<Parameter> p = parametersPerMethod.get(getMethod());
+        if (p == null)
+        {
+            return;
+        }
+
+        if (item.getRegisterNumber() == 0)
+        {
+            return;
+        }
+        Parameter parameter = p.stream().filter(e -> e.registerNumber == item.getRegisterNumber()).findFirst().get();
+        MethodUsage mu = new MethodUsage();
+        mu.setClassDescriptor(getClassDescriptorOperand());
+        mu.setMethodDescriptor(getMethodDescriptorOperand());
+        if (UsagesPerAttributePerMethod.containsKey(method))
+        {
+            HashMap<Parameter, ArrayList<Usage>> usage = UsagesPerAttributePerMethod.get(method);
+            if (usage.containsKey(parameter))
+            {
+                usage.get(parameter).add(mu);
+            }
+            else
+            {
+                usage.put(parameter, new ArrayList <>());
+                usage.get(parameter).add(mu);
+            }
+        }
+        else
+        {
+            UsagesPerAttributePerMethod.put(method, new HashMap <>());
+            HashMap<Parameter, ArrayList<Usage>> h = UsagesPerAttributePerMethod.get(method);
+            h.put(parameter, new ArrayList <>());
+            ArrayList<Usage> f = h.get(parameter);
+            f.add(mu);
+        }
     }
 
     @Override
