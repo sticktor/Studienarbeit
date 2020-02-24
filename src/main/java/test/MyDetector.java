@@ -1,5 +1,6 @@
 package test;
 
+import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
@@ -27,10 +28,18 @@ public class MyDetector extends OpcodeStackDetector {
     public void sawOpcode(int seen) {
         try
         {
-
             if (seen == Const.INVOKEVIRTUAL)
             {
                 item = getStack().getStackItem(0);
+            }
+            if (seen == Const.RETURN ||
+                    seen == Const.ARETURN ||
+                    seen == Const.DRETURN ||
+                    seen == Const.FRETURN ||
+                    seen == Const.IRETURN ||
+                    seen == Const.LRETURN)
+            {
+                onLeaveMethod(getMethod());
             }
             list.add(seen);
             try
@@ -44,7 +53,7 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (oldMethod != method)
                 {
-                    onLeaveMethod(oldMethod);
+                    //onLeaveMethod(oldMethod);
                     String firstParameterOfCurrentMethod;
                     System.out.println(method.getName());
                     if (method.getName().equals("<init>"))
@@ -131,9 +140,9 @@ public class MyDetector extends OpcodeStackDetector {
     @Override
     public void sawMethod()
     {
-        System.out.println(isMethodCall());
-        System.out.println(getClassDescriptorOperand());
-        System.out.println(getMethodDescriptorOperand());
+        //System.out.println(isMethodCall());
+        //System.out.println(getClassDescriptorOperand());
+        //System.out.println(getMethodDescriptorOperand());
 
         List<Parameter> p = parametersPerMethod.get(getMethod());
         if (p == null)
@@ -141,11 +150,16 @@ public class MyDetector extends OpcodeStackDetector {
             return;
         }
 
-        if (item.getRegisterNumber() == 0)
+        if (item == null || item.getRegisterNumber() == 0)
         {
             return;
         }
-        Parameter parameter = p.stream().filter(e -> e.registerNumber == item.getRegisterNumber()).findFirst().get();
+        Optional<Parameter> optionalParameter = p.stream().filter(e -> e.registerNumber == item.getRegisterNumber()).findFirst();
+        Parameter parameter = optionalParameter.orElse(null);
+        if (parameter == null)
+        {
+            return;
+        }
         MethodUsage mu = new MethodUsage();
         mu.setClassDescriptor(getClassDescriptorOperand());
         mu.setMethodDescriptor(getMethodDescriptorOperand());
@@ -170,6 +184,7 @@ public class MyDetector extends OpcodeStackDetector {
             ArrayList<Usage> f = h.get(parameter);
             f.add(mu);
         }
+        item = null;
     }
 
     @Override
@@ -191,7 +206,60 @@ public class MyDetector extends OpcodeStackDetector {
 
     public void onLeaveMethod(Method method)
     {
-        System.out.println("HELS");
-    }
+        HashMap<Parameter, ArrayList<Usage>> occurences = UsagesPerAttributePerMethod.get(method);
+        if (occurences == null)
+        {
+            return;
+        }
 
+        for (Map.Entry<Parameter, ArrayList<Usage>> entry : occurences.entrySet())
+        {
+            Class<?> clazz = entry.getKey().getClazz();
+            Class<?>[] interfaces = clazz.getInterfaces();
+            for (Class<?> inter: interfaces)
+            {
+                ArrayList<Boolean> booleans = new ArrayList<>();
+                for (Usage usage : entry.getValue())
+                {
+                    if (usage instanceof MethodUsage)
+                    {
+                        MethodUsage methodUsage = (MethodUsage) usage;
+                        MethodWrapper methodWrapper = null;
+                        try {
+                            methodWrapper = new MethodWrapper(methodUsage.getClassDescriptor(), methodUsage.getMethodDescriptor());
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        if (methodWrapper == null)
+                        {
+                            continue;
+                        }
+                        boolean once = false;
+                        for (java.lang.reflect.Method m : inter.getMethods())
+                        {
+                            MethodWrapper interMethodWrapper = new MethodWrapper(m);
+                            if (methodWrapper.equalMethod(interMethodWrapper))
+                            {
+                                once = true;
+                                break;
+                            }
+                        }
+                        booleans.add(once);
+                    }
+                    else if (usage instanceof FieldUsage)
+                    {
+                        FieldUsage fieldUsage = (FieldUsage) usage;
+                    }
+                }
+                if (booleans.stream().allMatch(e -> e))
+                {
+                    // report bug when System.out is used in code
+                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
+                            .addClassAndMethod(this)
+                            .addSourceLine(this, getPC()); // ToDo: get Line of Methodstart
+                    bugReporter.reportBug(bug);
+                }
+            }
+        }
+    }
 }

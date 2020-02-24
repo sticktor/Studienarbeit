@@ -1,7 +1,9 @@
 package test;
 
 class BadCase {
-    void method() {
-        System.out.println("Hello SpotBugs!");
+    public Object method(Tester test) {
+        test.doSmth();
+
+        return new Object();
     }
 }
