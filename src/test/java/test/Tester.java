@@ -2,7 +2,7 @@ package test;
 
 public class Tester implements ITester
 {
-
+    String x;
     @Override
     public void doSmth()
     {

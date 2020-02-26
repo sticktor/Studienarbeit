@@ -17,6 +17,8 @@ class GoodCase {
         //tm.clear();
         map.doSmth();
         map.malleBois();
+        map.x = "sda";
+        String f = map.x;
         meth();
         //map2.clear();
         //map.size();
