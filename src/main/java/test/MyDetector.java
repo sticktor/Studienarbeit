@@ -87,6 +87,7 @@ public class MyDetector extends OpcodeStackDetector {
                             String clazz = item.getSignature().substring(1, item.getSignature().length() - 1);
                             Class<?> c = Class.forName(clazz.replace("/", "."));
                             parameter.setClazz(c);
+                            parameter.setPC(getPC());
                             if (parametersPerMethod.containsKey(method))
                             {
                                 parametersPerMethod.get(method).add(parameter);
@@ -257,7 +258,7 @@ public class MyDetector extends OpcodeStackDetector {
                 {
                     BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, getPC()); // ToDo: get Line of Methodstart
+                            .addSourceLine(this, entry.getKey().getPC());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
@@ -282,7 +283,7 @@ public class MyDetector extends OpcodeStackDetector {
                 {
                     BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, getPC()); // ToDo: get Line of Methodstart
+                            .addSourceLine(this, entry.getKey().getPC());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }

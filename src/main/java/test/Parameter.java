@@ -8,6 +8,7 @@ public class Parameter
 {
     public int registerNumber;
     private Class clazz;
+    private int PC;
 
     @Override
     public boolean equals(Object o)
@@ -33,5 +34,13 @@ public class Parameter
     public void setClazz(Class clazz)
     {
         this.clazz = clazz;
+    }
+
+    public int getPC() {
+        return PC;
+    }
+
+    public void setPC(int PC) {
+        this.PC = PC;
     }
 }
