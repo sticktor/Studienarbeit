@@ -61,7 +61,6 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (oldMethod != method)
                 {
-                    //onLeaveMethod(oldMethod);
                     String firstParameterOfCurrentMethod;
                     System.out.println(method.getName());
                     if (method.getName().equals("<init>"))
@@ -99,12 +98,7 @@ public class MyDetector extends OpcodeStackDetector {
                                 parametersPerMethod.put(method,parameters);
                             }
                         }
-                        /*if (seen == Const.INVOKEVIRTUAL)
-                        {
-                            OpcodeStack.Item i = getStack().getStackItem(0);
-                            String sig = i.getSignature();
-                            int r = i.getRegisterNumber();
-                        }*/
+
                     }
                 }
                 /*ClassDescriptor c = getClassDescriptorOperand();
@@ -128,16 +122,6 @@ public class MyDetector extends OpcodeStackDetector {
                 methodOfClass = null;
                 inMethod = false;
             }
-
-            /*if (getClassConstantOperand().equals("java/lang/System")
-                    && getNameConstantOperand().equals("out"))
-            {
-                // report bug when System.out is used in code
-                BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
-                        .addClassAndMethod(this)
-                        .addSourceLine(this, getPC());
-                bugReporter.reportBug(bug);
-            }*/
         }
         catch (Exception e)
         {
