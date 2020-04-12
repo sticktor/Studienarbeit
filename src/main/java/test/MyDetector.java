@@ -5,6 +5,9 @@ import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
 import org.apache.bcel.Const;
+import org.apache.bcel.classfile.LineNumber;
+import org.apache.bcel.classfile.LineNumberTable;
+import org.apache.bcel.classfile.LocalVariableTable;
 import org.apache.bcel.classfile.Method;
 
 import java.util.*;
@@ -47,8 +50,15 @@ public class MyDetector extends OpcodeStackDetector {
                     seen == Const.IRETURN ||
                     seen == Const.LRETURN)
             {
-                onLeaveMethod(getMethod());
+                int pc = getPC();
+                LineNumberTable table = getMethod().getLineNumberTable();
+                LineNumber last = table.getLineNumberTable()[table.getTableLength()-1];
+                int pcOfLast = last.getStartPC();
+                if (pc == pcOfLast) {
+                    onLeaveMethod(getMethod());
+                }
             }
+
             list.add(seen);
             try
             {
@@ -67,36 +77,67 @@ public class MyDetector extends OpcodeStackDetector {
                     {
                         return;
                     }
-                    String[] signature = method.getSignature().replace("(", "").replace(")", "").split(";");
-                    firstParameterOfCurrentMethod = signature[0];
-                    firstParameterOfCurrentMethod = firstParameterOfCurrentMethod.substring(1);
-                    firstParameter = Class.forName(firstParameterOfCurrentMethod.replace("/","."));
-                    if (firstParameter != null)
+                    //String[] signature = method.getSignature().replace("(", "").replace(")", "").split(";");
+                    //if (signature.length <= 1)
+                    //{
+                    //    return;
+                    //}
+                    //firstParameterOfCurrentMethod = signature[0];
+                    //firstParameterOfCurrentMethod = firstParameterOfCurrentMethod.substring(1);
+                    int i = 1;
+                    while (true)
                     {
-                        int i = 1;
-                        while (true)
+                        OpcodeStack.Item item = getStack().getLVValue(i++);
+                        if (item.equals(new OpcodeStack.Item()))
                         {
-                            OpcodeStack.Item item = getStack().getLVValue(i++);
-                            if (item.equals(new OpcodeStack.Item()))
-                            {
-                                break;
+                            break;
+                        }
+                        Parameter parameter = new Parameter();
+                        parameter.registerNumber = item.getRegisterNumber();
+                        Class<?> c = null;
+                        if (item.getSignature().length() == 1)
+                        {
+                            switch (item.getSignature()) {
+                                case "I":
+                                    c = int.class;
+                                    break;
+                                case "Z":
+                                    c = boolean.class;
+                                    break;
+                                case "D":
+                                    c = double.class;
+                                    break;
+                                case "J":
+                                    c = long.class;
+                                    break;
+                                case "F":
+                                    c = float.class;
+                                    break;
+                                case "B":
+                                    c = byte.class;
+                                    break;
+                                case "S":
+                                    c = short.class;
+                                    break;
+                                case "C":
+                                    c = char.class;
+                                    break;
                             }
-                            Parameter parameter = new Parameter();
-                            parameter.registerNumber = item.getRegisterNumber();
+                        }
+                        else {
                             String clazz = item.getSignature().substring(1, item.getSignature().length() - 1);
-                            Class<?> c = Class.forName(clazz.replace("/", "."));
-                            parameter.setClazz(c);
-                            parameter.setPC(getPC());
-                            if (parametersPerMethod.containsKey(method))
-                            {
-                                parametersPerMethod.get(method).add(parameter);
-                            }
-                            else
-                            {
-                                List<Parameter> parameters = new ArrayList <>();
-                                parameters.add(parameter);
-                                parametersPerMethod.put(method,parameters);
-                            }
+                            c = Class.forName(clazz.replace("/", "."));
+                        }
+                        parameter.setClazz(c);
+                        parameter.setPC(getPC());
+                        if (parametersPerMethod.containsKey(method))
+                        {
+                            parametersPerMethod.get(method).add(parameter);
+                        }
+                        else {
+                            List<Parameter> parameters = new ArrayList <>();
+                            parameters.add(parameter);
+                            parametersPerMethod.put(method,parameters);
                         }
 
                     }
@@ -128,6 +169,7 @@ public class MyDetector extends OpcodeStackDetector {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public void sawMethod()
