@@ -1,4 +1,4 @@
-package test;
+package test.helper;
 
 import edu.umd.cs.findbugs.classfile.ClassDescriptor;
 import edu.umd.cs.findbugs.classfile.FieldDescriptor;
@@ -21,7 +21,7 @@ public class FieldWrapper {
 		this.declaringClass = Class.forName(classDescriptor.getDottedClassName());
 
 		this.name = fieldDescriptor.getName();
-		fieldDescriptor.getSignature();
+		this.type = Class.forName(fieldDescriptor.getClassDescriptor().getDottedClassName());
 	}
 
 	@Override

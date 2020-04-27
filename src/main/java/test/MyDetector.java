@@ -7,8 +7,8 @@ import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.LineNumber;
 import org.apache.bcel.classfile.LineNumberTable;
-import org.apache.bcel.classfile.LocalVariableTable;
 import org.apache.bcel.classfile.Method;
+import test.helper.*;
 
 import java.util.*;
 
@@ -20,7 +20,6 @@ public class MyDetector extends OpcodeStackDetector {
     }
     static List<Integer> list = new ArrayList<>();
     static boolean inMethod;
-    static MethodOfClass methodOfClass;
     static Method method;
     static Class<?> firstParameter;
     static Map<Method, List<Parameter>> parametersPerMethod = new HashMap <>();
@@ -71,19 +70,11 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (oldMethod != method)
                 {
-                    String firstParameterOfCurrentMethod;
                     System.out.println(method.getName());
                     if (method.getName().equals("<init>"))
                     {
                         return;
                     }
-                    //String[] signature = method.getSignature().replace("(", "").replace(")", "").split(";");
-                    //if (signature.length <= 1)
-                    //{
-                    //    return;
-                    //}
-                    //firstParameterOfCurrentMethod = signature[0];
-                    //firstParameterOfCurrentMethod = firstParameterOfCurrentMethod.substring(1);
                     int i = 1;
                     while (true)
                     {
@@ -129,7 +120,7 @@ public class MyDetector extends OpcodeStackDetector {
                             c = Class.forName(clazz.replace("/", "."));
                         }
                         parameter.setClazz(c);
-                        parameter.setPC(getPC());
+                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                         if (parametersPerMethod.containsKey(method))
                         {
                             parametersPerMethod.get(method).add(parameter);
@@ -160,7 +151,6 @@ public class MyDetector extends OpcodeStackDetector {
             catch (Exception e)
             {
                 e.printStackTrace();
-                methodOfClass = null;
                 inMethod = false;
             }
         }
@@ -205,7 +195,7 @@ public class MyDetector extends OpcodeStackDetector {
         {
             UsagesPerAttributePerMethod.put(method, new HashMap <>());
             HashMap<Parameter, ArrayList<Usage>> h = UsagesPerAttributePerMethod.get(method);
-            h.put(parameter, new ArrayList <>());
+            h.put(parameter, new ArrayList<>());
             ArrayList<Usage> f = h.get(parameter);
             f.add(mu);
         }
@@ -284,7 +274,7 @@ public class MyDetector extends OpcodeStackDetector {
                 {
                     BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getPC());
+                            .addSourceLine(this, entry.getKey().getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
@@ -309,7 +299,7 @@ public class MyDetector extends OpcodeStackDetector {
                 {
                     BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getPC());
+                            .addSourceLine(this, entry.getKey().getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }

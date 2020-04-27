@@ -1,14 +1,12 @@
-package test;
-
-import edu.umd.cs.findbugs.classfile.ClassDescriptor;
+package test.helper;
 
 import java.util.Objects;
 
 public class Parameter
 {
     public int registerNumber;
-    private Class clazz;
-    private int PC;
+    private Class<?> clazz;
+    private int lineNumber;
 
     @Override
     public boolean equals(Object o)
@@ -36,11 +34,11 @@ public class Parameter
         this.clazz = clazz;
     }
 
-    public int getPC() {
-        return PC;
+    public int getLineNumber() {
+        return lineNumber;
     }
 
-    public void setPC(int PC) {
-        this.PC = PC;
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
     }
 }
