@@ -5,9 +5,7 @@ import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
 import org.apache.bcel.Const;
-import org.apache.bcel.classfile.LineNumber;
-import org.apache.bcel.classfile.LineNumberTable;
-import org.apache.bcel.classfile.Method;
+import org.apache.bcel.classfile.*;
 import test.helper.*;
 
 import java.util.*;
@@ -19,12 +17,11 @@ public class MyDetector extends OpcodeStackDetector {
         this.bugReporter = bugReporter;
     }
     static List<Integer> list = new ArrayList<>();
-    static boolean inMethod;
     static Method method;
-    static Class<?> firstParameter;
     static Map<Method, List<Parameter>> parametersPerMethod = new HashMap <>();
     static HashMap<Method, HashMap<Parameter, ArrayList<Usage>>> UsagesPerAttributePerMethod = new HashMap <>();
     static OpcodeStack.Item item;
+    static int paras;
     @Override
     public void sawOpcode(int seen) {
         try
@@ -32,10 +29,26 @@ public class MyDetector extends OpcodeStackDetector {
             if (seen == Const.INVOKEVIRTUAL || seen == Const.GETFIELD)
             {
                 item = getStack().getStackItem(0);
+                if (method.isStatic())
+                {
+                    if (item.getRegisterNumber() >= paras)
+                    {
+                        sawMethod();
+                    }
+                }
+                else if (item.getRegisterNumber() > paras)
+                {
+                    sawMethod();
+                }
             }
             else if (seen == Const.PUTFIELD)
             {
                 item = getStack().getStackItem(1);
+            }
+            else if (seen == Const.INVOKEINTERFACE)
+            {
+                item = getStack().getStackItem(0);
+                sawMethod();
             }
             else
             {
@@ -64,12 +77,14 @@ public class MyDetector extends OpcodeStackDetector {
                 //System.out.println(seen);
                 Method oldMethod = method;
                 method = getMethod();
+
                 if (method.getName().equals("method"))
                 {
                     System.out.println("IN THE REAL");
                 }
                 if (oldMethod != method)
                 {
+                    paras = 0;
                     System.out.println(method.getName());
                     if (method.getName().equals("<init>"))
                     {
@@ -83,6 +98,7 @@ public class MyDetector extends OpcodeStackDetector {
                         {
                             break;
                         }
+                        paras++;
                         Parameter parameter = new Parameter();
                         parameter.registerNumber = item.getRegisterNumber();
                         Class<?> c = null;
@@ -130,7 +146,26 @@ public class MyDetector extends OpcodeStackDetector {
                             parameters.add(parameter);
                             parametersPerMethod.put(method,parameters);
                         }
-
+                    }
+                    LocalVariableTable table = method.getLocalVariableTable();
+                    if (method.isStatic())
+                        i--;
+                    for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
+                        LocalVariable variable = table.getLocalVariable(j);
+                        String signature = variable.getSignature();
+                        Parameter p = new Parameter();
+                        p.registerNumber = j;
+                        p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
+                        if (parametersPerMethod.containsKey(method))
+                        {
+                            parametersPerMethod.get(method).add(p);
+                        }
+                        else
+                        {
+                            List<Parameter> parameters = new ArrayList <>();
+                            parameters.add(p);
+                            parametersPerMethod.put(method,parameters);
+                        }
                     }
                 }
                 /*ClassDescriptor c = getClassDescriptorOperand();
@@ -151,7 +186,6 @@ public class MyDetector extends OpcodeStackDetector {
             catch (Exception e)
             {
                 e.printStackTrace();
-                inMethod = false;
             }
         }
         catch (Exception e)
