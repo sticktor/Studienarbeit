@@ -1,4 +1,4 @@
-package detector.helper;
+package test.helper;
 
 import java.util.Objects;
 

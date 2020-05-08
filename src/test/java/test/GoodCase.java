@@ -1,6 +1,10 @@
-package detector;
+package test;
+
+import org.apache.bcel.classfile.Method;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 
 class GoodCase {
     ArrayList x = new ArrayList();

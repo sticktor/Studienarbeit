@@ -3,17 +3,17 @@
   xsi:noNamespaceSchemaLocation="messagecollection.xsd">
 
   <Plugin>
-    <ShortDescription>Finds possible Generalizations</ShortDescription>
-    <Details>If it is possible to use a more general Type for a Method Parameter or a local Variable this plugin will show that you can generalise it</Details>
+    <ShortDescription>My SpotBugs Plugin</ShortDescription>
+    <Details>This plugin provides original detectors</Details>
   </Plugin>
 
-  <Detector class="detector.PossibleGeneralizationDetector">
+  <Detector class="test.MyDetector">
     <Details>
-      Finds POSSIBLE_GENERALIZATION
+      Original detector to detect MY_BUG bug pattern.
     </Details>
   </Detector>
 
-  <BugPattern type="POSSIBLE_GENERALIZATION">
+  <BugPattern type="MY_BUG">
     <ShortDescription>Explain bug pattern shortly.</ShortDescription>
     <LongDescription>
       Explain existing problem in code, and how developer should improve their implementation.
@@ -25,5 +25,5 @@
     </Details>
   </BugPattern>
 
-  <BugCode abbrev="MY">Possible Generalization</BugCode>
+  <BugCode abbrev="MY">My SpotBugs BugCode</BugCode>
 </MessageCollection>

@@ -1,4 +1,4 @@
-package detector;
+package test;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -6,14 +6,14 @@ import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.*;
-import detector.helper.*;
+import test.helper.*;
 
 import java.util.*;
 
-public class PossibleGeneralizationDetector extends OpcodeStackDetector {
+public class MyDetector extends OpcodeStackDetector {
     private final BugReporter bugReporter;
 
-    public PossibleGeneralizationDetector(BugReporter bugReporter) {
+    public MyDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
     }
     static List<Integer> list = new ArrayList<>();
@@ -22,7 +22,6 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
     static HashMap<Method, HashMap<Parameter, ArrayList<Usage>>> UsagesPerAttributePerMethod = new HashMap <>();
     static OpcodeStack.Item item;
     static int paras;
-    static int globalLine;
     @Override
     public void sawOpcode(int seen) {
         try
@@ -92,8 +91,6 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
                         return;
                     }
                     int i = 1;
-                    if (method.isStatic())
-                        i--;
                     while (true)
                     {
                         OpcodeStack.Item item = getStack().getLVValue(i++);
@@ -139,8 +136,7 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
                             c = Class.forName(clazz.replace("/", "."));
                         }
                         parameter.setClazz(c);
-                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber()-1);
-                        globalLine = getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber()-1;
+                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                         if (parametersPerMethod.containsKey(method))
                         {
                             parametersPerMethod.get(method).add(parameter);
@@ -155,25 +151,20 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
                     if (method.isStatic())
                         i--;
                     for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
-                        int finalJ = j;
-                        Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
-                        if (optional.isPresent())
+                        LocalVariable variable = table.getLocalVariable(j);
+                        String signature = variable.getSignature();
+                        Parameter p = new Parameter();
+                        p.registerNumber = j;
+                        p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
+                        if (parametersPerMethod.containsKey(method))
                         {
-                            LocalVariable variable = optional.get();
-                            String signature = variable.getSignature();
-                            Parameter p = new Parameter();
-                            p.registerNumber = j;
-                            p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
-                            if (parametersPerMethod.containsKey(method))
-                            {
-                                parametersPerMethod.get(method).add(p);
-                            }
-                            else
-                            {
-                                List<Parameter> parameters = new ArrayList <>();
-                                parameters.add(p);
-                                parametersPerMethod.put(method,parameters);
-                            }
+                            parametersPerMethod.get(method).add(p);
+                        }
+                        else
+                        {
+                            List<Parameter> parameters = new ArrayList <>();
+                            parameters.add(p);
+                            parametersPerMethod.put(method,parameters);
                         }
                     }
                 }
@@ -213,7 +204,7 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
             return;
         }
 
-        if (item == null)
+        if (item == null || item.getRegisterNumber() == 0)
         {
             return;
         }
@@ -315,9 +306,9 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "POSSIBLE_GENERALIZATION", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, globalLine);
+                            .addSourceLine(this, entry.getKey().getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
@@ -340,9 +331,9 @@ public class PossibleGeneralizationDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "POSSIBLE_GENERALIZATION", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, globalLine);
+                            .addSourceLine(this, entry.getKey().getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }

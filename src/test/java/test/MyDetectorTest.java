@@ -1,4 +1,4 @@
-package detector;
+package test;
 
 import static edu.umd.cs.findbugs.test.CountMatcher.containsExactly;
 import static org.junit.Assert.assertThat;
@@ -14,7 +14,7 @@ import edu.umd.cs.findbugs.test.SpotBugsRule;
 import edu.umd.cs.findbugs.test.matcher.BugInstanceMatcher;
 import edu.umd.cs.findbugs.test.matcher.BugInstanceMatcherBuilder;
 
-public class PossibleGeneralizationDetectorTest {
+public class MyDetectorTest {
     @Rule
     public SpotBugsRule spotbugs = new SpotBugsRule();
 
@@ -24,7 +24,7 @@ public class PossibleGeneralizationDetectorTest {
         BugCollection bugCollection = spotbugs.performAnalysis(path);
 
         BugInstanceMatcher bugTypeMatcher = new BugInstanceMatcherBuilder()
-                .bugType("POSSIBLE_GENERALIZATION").build();
+                .bugType("MY_BUG").build();
         assertThat(bugCollection, containsExactly(0, bugTypeMatcher));
     }
 
@@ -34,7 +34,7 @@ public class PossibleGeneralizationDetectorTest {
         BugCollection bugCollection = spotbugs.performAnalysis(path);
 
         BugInstanceMatcher bugTypeMatcher = new BugInstanceMatcherBuilder()
-                .bugType("POSSIBLE_GENERALIZATION").build();
+                .bugType("MY_BUG").build();
         assertThat(bugCollection, containsExactly(1, bugTypeMatcher));
     }
 }

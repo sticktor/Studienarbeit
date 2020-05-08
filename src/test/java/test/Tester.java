@@ -1,4 +1,4 @@
-package detector;
+package test;
 
 public class Tester implements ITester
 {
