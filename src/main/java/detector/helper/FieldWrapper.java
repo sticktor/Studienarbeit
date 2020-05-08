@@ -1,4 +1,4 @@
-package test.helper;
+package detector.helper;
 
 import edu.umd.cs.findbugs.classfile.ClassDescriptor;
 import edu.umd.cs.findbugs.classfile.FieldDescriptor;

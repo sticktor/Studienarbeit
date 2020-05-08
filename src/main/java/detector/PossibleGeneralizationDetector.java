@@ -1,4 +1,4 @@
-package test;
+package detector;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -6,14 +6,14 @@ import edu.umd.cs.findbugs.OpcodeStack;
 import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.*;
-import test.helper.*;
+import detector.helper.*;
 
 import java.util.*;
 
-public class MyDetector extends OpcodeStackDetector {
+public class PossibleGeneralizationDetector extends OpcodeStackDetector {
     private final BugReporter bugReporter;
 
-    public MyDetector(BugReporter bugReporter) {
+    public PossibleGeneralizationDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
     }
     static List<Integer> list = new ArrayList<>();
@@ -22,6 +22,7 @@ public class MyDetector extends OpcodeStackDetector {
     static HashMap<Method, HashMap<Parameter, ArrayList<Usage>>> UsagesPerAttributePerMethod = new HashMap <>();
     static OpcodeStack.Item item;
     static int paras;
+    static int globalLine;
     @Override
     public void sawOpcode(int seen) {
         try
@@ -91,6 +92,8 @@ public class MyDetector extends OpcodeStackDetector {
                         return;
                     }
                     int i = 1;
+                    if (method.isStatic())
+                        i--;
                     while (true)
                     {
                         OpcodeStack.Item item = getStack().getLVValue(i++);
@@ -136,7 +139,8 @@ public class MyDetector extends OpcodeStackDetector {
                             c = Class.forName(clazz.replace("/", "."));
                         }
                         parameter.setClazz(c);
-                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
+                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber()-1);
+                        globalLine = getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber()-1;
                         if (parametersPerMethod.containsKey(method))
                         {
                             parametersPerMethod.get(method).add(parameter);
@@ -151,20 +155,25 @@ public class MyDetector extends OpcodeStackDetector {
                     if (method.isStatic())
                         i--;
                     for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
-                        LocalVariable variable = table.getLocalVariable(j);
-                        String signature = variable.getSignature();
-                        Parameter p = new Parameter();
-                        p.registerNumber = j;
-                        p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
-                        if (parametersPerMethod.containsKey(method))
+                        int finalJ = j;
+                        Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
+                        if (optional.isPresent())
                         {
-                            parametersPerMethod.get(method).add(p);
-                        }
-                        else
-                        {
-                            List<Parameter> parameters = new ArrayList <>();
-                            parameters.add(p);
-                            parametersPerMethod.put(method,parameters);
+                            LocalVariable variable = optional.get();
+                            String signature = variable.getSignature();
+                            Parameter p = new Parameter();
+                            p.registerNumber = j;
+                            p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
+                            if (parametersPerMethod.containsKey(method))
+                            {
+                                parametersPerMethod.get(method).add(p);
+                            }
+                            else
+                            {
+                                List<Parameter> parameters = new ArrayList <>();
+                                parameters.add(p);
+                                parametersPerMethod.put(method,parameters);
+                            }
                         }
                     }
                 }
@@ -204,7 +213,7 @@ public class MyDetector extends OpcodeStackDetector {
             return;
         }
 
-        if (item == null || item.getRegisterNumber() == 0)
+        if (item == null)
         {
             return;
         }
@@ -306,9 +315,9 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "POSSIBLE_GENERALIZATION", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getLineNumber());
+                            .addSourceLine(this, globalLine);
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
@@ -331,9 +340,9 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "POSSIBLE_GENERALIZATION", NORMAL_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getLineNumber());
+                            .addSourceLine(this, globalLine);
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
