@@ -151,20 +151,21 @@ public class MyDetector extends OpcodeStackDetector {
                     if (method.isStatic())
                         i--;
                     for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
-                        LocalVariable variable = table.getLocalVariable(j);
-                        String signature = variable.getSignature();
-                        Parameter p = new Parameter();
-                        p.registerNumber = j;
-                        p.setClazz(Class.forName(signature.substring(1, signature.length()-1).replace("/", ".")));
-                        if (parametersPerMethod.containsKey(method))
-                        {
-                            parametersPerMethod.get(method).add(p);
-                        }
-                        else
-                        {
-                            List<Parameter> parameters = new ArrayList <>();
-                            parameters.add(p);
-                            parametersPerMethod.put(method,parameters);
+                        int finalJ = j;
+                        Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
+                        if (optional.isPresent()) {
+                            LocalVariable variable = optional.get();
+                            String signature = variable.getSignature();
+                            Parameter p = new Parameter();
+                            p.registerNumber = j;
+                            p.setClazz(Class.forName(signature.substring(1, signature.length() - 1).replace("/", ".")));
+                            if (parametersPerMethod.containsKey(method)) {
+                                parametersPerMethod.get(method).add(p);
+                            } else {
+                                List<Parameter> parameters = new ArrayList<>();
+                                parameters.add(p);
+                                parametersPerMethod.put(method, parameters);
+                            }
                         }
                     }
                 }
@@ -204,7 +205,7 @@ public class MyDetector extends OpcodeStackDetector {
             return;
         }
 
-        if (item == null || item.getRegisterNumber() == 0)
+        if (item == null)
         {
             return;
         }
@@ -306,9 +307,9 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "MY_BUG", HIGH_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getLineNumber());
+                            .addSourceLine(this, method.getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
@@ -331,9 +332,9 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", NORMAL_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "MY_BUG", HIGH_PRIORITY)
                             .addClassAndMethod(this)
-                            .addSourceLine(this, entry.getKey().getLineNumber());
+                            .addSourceLine(this, method.getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                     bugReporter.reportBug(bug);
                     continue outer;
                 }
