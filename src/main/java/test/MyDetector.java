@@ -22,24 +22,32 @@ public class MyDetector extends OpcodeStackDetector {
     static HashMap<Method, HashMap<Parameter, ArrayList<Usage>>> UsagesPerAttributePerMethod = new HashMap <>();
     static OpcodeStack.Item item;
     static int paras;
+    static boolean manuallyInvoked = false;
     @Override
     public void sawOpcode(int seen) {
         try
         {
-            if (seen == Const.INVOKEVIRTUAL || seen == Const.GETFIELD)
+            if (seen == Const.INVOKEVIRTUAL || seen == Const.GETFIELD || seen == Const.INVOKESTATIC)
             {
-                item = getStack().getStackItem(0);
-                if (method.isStatic())
+                manuallyInvoked = true;
+                int counter = 0;
+                for (int i = 0; i < getMethodDescriptorOperand().getSignature().split(";").length - 1; i++)
                 {
-                    if (item.getRegisterNumber() >= paras)
-                    {
-                        sawMethod();
-                    }
+                    counter++;
                 }
-                else if (item.getRegisterNumber() > paras)
-                {
-                    sawMethod();
-                }
+                item = getStack().getStackItem(counter);
+                //if (method.isStatic())
+                //{
+                //    if (item.getRegisterNumber() >= paras)
+                //    {
+                //        sawMethod();
+                //    }
+                //}
+                //else if (item.getRegisterNumber() > paras)
+                //{
+                //    sawMethod();
+                //}
+                sawMethod();
             }
             else if (seen == Const.PUTFIELD)
             {
@@ -47,6 +55,7 @@ public class MyDetector extends OpcodeStackDetector {
             }
             else if (seen == Const.INVOKEINTERFACE)
             {
+                manuallyInvoked = true;
                 item = getStack().getStackItem(0);
                 sawMethod();
             }
@@ -66,7 +75,7 @@ public class MyDetector extends OpcodeStackDetector {
                 LineNumberTable table = getMethod().getLineNumberTable();
                 LineNumber last = table.getLineNumberTable()[table.getTableLength()-1];
                 int pcOfLast = last.getStartPC();
-                if (pc == pcOfLast) {
+                if (pc >= pcOfLast) {
                     onLeaveMethod(getMethod());
                 }
             }
@@ -91,6 +100,8 @@ public class MyDetector extends OpcodeStackDetector {
                         return;
                     }
                     int i = 1;
+                    if (method.isStatic())
+                        i--;
                     while (true)
                     {
                         OpcodeStack.Item item = getStack().getLVValue(i++);
@@ -148,17 +159,45 @@ public class MyDetector extends OpcodeStackDetector {
                         }
                     }
                     LocalVariableTable table = method.getLocalVariableTable();
-                    if (method.isStatic())
-                        i--;
                     for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
                         int finalJ = j;
                         Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
                         if (optional.isPresent()) {
                             LocalVariable variable = optional.get();
                             String signature = variable.getSignature();
+                            Class<?> c;
+                            switch (signature) {
+                                case "I":
+                                    c = int.class;
+                                    break;
+                                case "Z":
+                                    c = boolean.class;
+                                    break;
+                                case "D":
+                                    c = double.class;
+                                    break;
+                                case "J":
+                                    c = long.class;
+                                    break;
+                                case "F":
+                                    c = float.class;
+                                    break;
+                                case "B":
+                                    c = byte.class;
+                                    break;
+                                case "S":
+                                    c = short.class;
+                                    break;
+                                case "C":
+                                    c = char.class;
+                                    break;
+                                default:
+                                    c = Class.forName(signature.substring(1, signature.length() - 1).replace("/", "."));
+                                    break;
+                            }
                             Parameter p = new Parameter();
                             p.registerNumber = j;
-                            p.setClazz(Class.forName(signature.substring(1, signature.length() - 1).replace("/", ".")));
+                            p.setClazz(c);
                             if (parametersPerMethod.containsKey(method)) {
                                 parametersPerMethod.get(method).add(p);
                             } else {
@@ -199,20 +238,27 @@ public class MyDetector extends OpcodeStackDetector {
     @Override
     public void sawMethod()
     {
+        if (!manuallyInvoked)
+        {
+            return;
+        }
         List<Parameter> p = parametersPerMethod.get(getMethod());
         if (p == null)
         {
+            manuallyInvoked = false;
             return;
         }
 
         if (item == null)
         {
+            manuallyInvoked = false;
             return;
         }
         Optional<Parameter> optionalParameter = p.stream().filter(e -> e.registerNumber == item.getRegisterNumber()).findFirst();
         Parameter parameter = optionalParameter.orElse(null);
         if (parameter == null)
         {
+            manuallyInvoked = false;
             return;
         }
         MethodUsage mu = new MethodUsage();
@@ -235,6 +281,7 @@ public class MyDetector extends OpcodeStackDetector {
             f.add(mu);
         }
         item = null;
+        manuallyInvoked = false;
     }
 
     @Override
