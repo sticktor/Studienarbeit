@@ -28,76 +28,16 @@ public class MethodWrapper
 
 		for (int i = 0; i < signature.length-1; i++) {
 			String parameter = signature[i];
-			switch (parameter) {
-				case "I":
-					parameterTypes[i] = int.class;
-					break;
-				case "Z":
-					parameterTypes[i] = boolean.class;
-					break;
-				case "D":
-					parameterTypes[i] = double.class;
-					break;
-				case "J":
-					parameterTypes[i] = long.class;
-					break;
-				case "F":
-					parameterTypes[i] = float.class;
-					break;
-				case "B":
-					parameterTypes[i] = byte.class;
-					break;
-				case "S":
-					parameterTypes[i] = short.class;
-					break;
-				case "C":
-					parameterTypes[i] = char.class;
-					break;
-				default:
-					parameterTypes[i] = Class.forName(parameter.substring(1).replace("/", "."));
-					break;
-			}
-			//parameter = parameter.substring(1);
-			//parameterTypes[i] = Class.forName(parameter.replace("/", "."));
+			parameterTypes[i] = ClassHelper.GetClassFromString(parameter);
 		}
 		this.name = methodDescriptor.getName();
-		String parameter = signature[1];
-		if (parameter.replace("/", ".").equals("V"))
-		{
-			returnType = Void.TYPE;
-		}
-		else
-		{
-			switch (parameter) {
-				case "I":
-					returnType = int.class;
-					break;
-				case "Z":
-					returnType = boolean.class;
-					break;
-				case "D":
-					returnType = double.class;
-					break;
-				case "J":
-					returnType = long.class;
-					break;
-				case "F":
-					returnType = float.class;
-					break;
-				case "B":
-					returnType = byte.class;
-					break;
-				case "S":
-					returnType = short.class;
-					break;
-				case "C":
-					returnType = char.class;
-					break;
-				default:
-					returnType = Class.forName(parameter.substring(1).replace("/", "."));
-					break;
+		if (signature.length > 1) {
+			String parameter = signature[1];
+			if (parameter.replace("/", ".").equals("V")) {
+				returnType = Void.TYPE;
+			} else {
+				returnType = ClassHelper.GetClassFromString(parameter);
 			}
-			//returnType = Class.forName(parameter.substring(1).replace("/", "."));
 		}
 	}
 

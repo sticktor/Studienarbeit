@@ -21,7 +21,7 @@ public class FieldWrapper {
 		this.declaringClass = Class.forName(classDescriptor.getDottedClassName());
 
 		this.name = fieldDescriptor.getName();
-		this.type = Class.forName(fieldDescriptor.getClassDescriptor().getDottedClassName());
+		this.type = ClassHelper.GetClassFromString(fieldDescriptor.getClassDescriptor().getDottedClassName());
 	}
 
 	@Override

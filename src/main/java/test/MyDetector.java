@@ -25,14 +25,11 @@ public class MyDetector extends OpcodeStackDetector {
     static boolean manuallyInvoked = false;
     @Override
     public void sawOpcode(int seen) {
-        try
-        {
-            if (seen == Const.INVOKEVIRTUAL || seen == Const.GETFIELD || seen == Const.INVOKESTATIC)
-            {
+        try {
+            if (seen == Const.INVOKEVIRTUAL || seen == Const.INVOKESTATIC || seen == Const.INVOKEINTERFACE) {
                 manuallyInvoked = true;
                 int counter = 0;
-                for (int i = 0; i < getMethodDescriptorOperand().getSignature().split(";").length - 1; i++)
-                {
+                for (int i = 0; i < getMethodDescriptorOperand().getSignature().split(";").length - 1; i++) {
                     counter++;
                 }
                 item = getStack().getStackItem(counter);
@@ -48,32 +45,23 @@ public class MyDetector extends OpcodeStackDetector {
                 //    sawMethod();
                 //}
                 sawMethod();
-            }
-            else if (seen == Const.PUTFIELD)
-            {
+            } else if (seen == Const.PUTFIELD) {
                 item = getStack().getStackItem(1);
-            }
-            else if (seen == Const.INVOKEINTERFACE)
-            {
-                manuallyInvoked = true;
+            } else if (seen == Const.GETFIELD) {
                 item = getStack().getStackItem(0);
-                sawMethod();
-            }
-            else
-            {
+            } else {
                 item = null;
             }
 
-            if (    seen == Const.RETURN ||
+            if (seen == Const.RETURN ||
                     seen == Const.ARETURN ||
                     seen == Const.DRETURN ||
                     seen == Const.FRETURN ||
                     seen == Const.IRETURN ||
-                    seen == Const.LRETURN)
-            {
+                    seen == Const.LRETURN) {
                 int pc = getPC();
                 LineNumberTable table = getMethod().getLineNumberTable();
-                LineNumber last = table.getLineNumberTable()[table.getTableLength()-1];
+                LineNumber last = table.getLineNumberTable()[table.getTableLength() - 1];
                 int pcOfLast = last.getStartPC();
                 if (pc >= pcOfLast) {
                     onLeaveMethod(getMethod());
@@ -81,154 +69,67 @@ public class MyDetector extends OpcodeStackDetector {
             }
 
             list.add(seen);
-            try
-            {
-                //System.out.println(seen);
-                Method oldMethod = method;
-                method = getMethod();
 
-                if (method.getName().equals("method"))
-                {
-                    System.out.println("IN THE REAL");
+            //System.out.println(seen);
+            Method oldMethod = method;
+            method = getMethod();
+
+            if (oldMethod != method) {
+                paras = 0;
+                int i = 1;
+                if (method.isStatic())
+                    i--;
+                while (true) {
+                    OpcodeStack.Item item = getStack().getLVValue(i++);
+                    if (item.equals(new OpcodeStack.Item())) {
+                        break;
+                    }
+                    paras++;
+                    Parameter parameter = new Parameter();
+                    parameter.registerNumber = item.getRegisterNumber();
+                    Class<?> c;
+                    if (item.getSignature().length() == 1) {
+                        c = ClassHelper.GetPrimitiveTypeFromString(item.getSignature());
+                    } else {
+                        String clazz = item.getSignature().substring(1, item.getSignature().length() - 1);
+                        c = Class.forName(clazz.replace("/", "."));
+                    }
+                    parameter.setClazz(c);
+                    parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
+                    if (parametersPerMethod.containsKey(method)) {
+                        parametersPerMethod.get(method).add(parameter);
+                    } else {
+                        List<Parameter> parameters = new ArrayList<>();
+                        parameters.add(parameter);
+                        parametersPerMethod.put(method, parameters);
+                    }
                 }
-                if (oldMethod != method)
-                {
-                    paras = 0;
-                    System.out.println(method.getName());
-                    if (method.getName().equals("<init>"))
-                    {
-                        return;
-                    }
-                    int i = 1;
-                    if (method.isStatic())
-                        i--;
-                    while (true)
-                    {
-                        OpcodeStack.Item item = getStack().getLVValue(i++);
-                        if (item.equals(new OpcodeStack.Item()))
-                        {
-                            break;
+                LocalVariableTable table = method.getLocalVariableTable();
+                for (int j = i - 1; j < table.getLocalVariableTable().length; j++) {
+                    int finalJ = j;
+                    Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
+                    if (optional.isPresent()) {
+                        LocalVariable variable = optional.get();
+                        String signature = variable.getSignature();
+                        Class<?> c = ClassHelper.GetPrimitiveTypeFromString(signature);
+                        if (c == null) {
+                            c = Class.forName(signature.substring(1, signature.length() - 1).replace("/", "."));
                         }
-                        paras++;
-                        Parameter parameter = new Parameter();
-                        parameter.registerNumber = item.getRegisterNumber();
-                        Class<?> c = null;
-                        if (item.getSignature().length() == 1)
-                        {
-                            switch (item.getSignature()) {
-                                case "I":
-                                    c = int.class;
-                                    break;
-                                case "Z":
-                                    c = boolean.class;
-                                    break;
-                                case "D":
-                                    c = double.class;
-                                    break;
-                                case "J":
-                                    c = long.class;
-                                    break;
-                                case "F":
-                                    c = float.class;
-                                    break;
-                                case "B":
-                                    c = byte.class;
-                                    break;
-                                case "S":
-                                    c = short.class;
-                                    break;
-                                case "C":
-                                    c = char.class;
-                                    break;
-                            }
-                        }
-                        else {
-                            String clazz = item.getSignature().substring(1, item.getSignature().length() - 1);
-                            c = Class.forName(clazz.replace("/", "."));
-                        }
-                        parameter.setClazz(c);
-                        parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
-                        if (parametersPerMethod.containsKey(method))
-                        {
-                            parametersPerMethod.get(method).add(parameter);
-                        }
-                        else {
-                            List<Parameter> parameters = new ArrayList <>();
-                            parameters.add(parameter);
-                            parametersPerMethod.put(method,parameters);
-                        }
-                    }
-                    LocalVariableTable table = method.getLocalVariableTable();
-                    for (int j = i-1; j < table.getLocalVariableTable().length; j++) {
-                        int finalJ = j;
-                        Optional<LocalVariable> optional = Arrays.stream(table.getLocalVariableTable()).filter(e -> e.getIndex() == finalJ).findFirst();
-                        if (optional.isPresent()) {
-                            LocalVariable variable = optional.get();
-                            String signature = variable.getSignature();
-                            Class<?> c;
-                            switch (signature) {
-                                case "I":
-                                    c = int.class;
-                                    break;
-                                case "Z":
-                                    c = boolean.class;
-                                    break;
-                                case "D":
-                                    c = double.class;
-                                    break;
-                                case "J":
-                                    c = long.class;
-                                    break;
-                                case "F":
-                                    c = float.class;
-                                    break;
-                                case "B":
-                                    c = byte.class;
-                                    break;
-                                case "S":
-                                    c = short.class;
-                                    break;
-                                case "C":
-                                    c = char.class;
-                                    break;
-                                default:
-                                    c = Class.forName(signature.substring(1, signature.length() - 1).replace("/", "."));
-                                    break;
-                            }
-                            Parameter p = new Parameter();
-                            p.registerNumber = j;
-                            p.setClazz(c);
-                            if (parametersPerMethod.containsKey(method)) {
-                                parametersPerMethod.get(method).add(p);
-                            } else {
-                                List<Parameter> parameters = new ArrayList<>();
-                                parameters.add(p);
-                                parametersPerMethod.put(method, parameters);
-                            }
+                        Parameter p = new Parameter();
+                        p.registerNumber = j;
+                        p.setClazz(c);
+                        if (parametersPerMethod.containsKey(method)) {
+                            parametersPerMethod.get(method).add(p);
+                        } else {
+                            List<Parameter> parameters = new ArrayList<>();
+                            parameters.add(p);
+                            parametersPerMethod.put(method, parameters);
                         }
                     }
                 }
-                /*ClassDescriptor c = getClassDescriptorOperand();
-                MethodOfClass moc = new MethodOfClass();
-                moc.classDescriptor = c;
-                moc.method = m;
-                if (moc.equals(methodOfClass))
-                {
-                    inMethod = true;
-                }
-                else
-                {
-                    inMethod = true;
-                    methodOfClass = moc;
-                    System.out.println(moc.method.getSignature());
-                }*/
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
             }
         }
-        catch (Exception e)
+        catch (ClassNotFoundException e)
         {
             e.printStackTrace();
         }
@@ -383,7 +284,6 @@ public class MyDetector extends OpcodeStackDetector {
                             .addClassAndMethod(this)
                             .addSourceLine(this, method.getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                     bugReporter.reportBug(bug);
-                    continue outer;
                 }
             }
         }
