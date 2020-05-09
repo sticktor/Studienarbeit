@@ -3,20 +3,20 @@
   xsi:noNamespaceSchemaLocation="messagecollection.xsd">
 
   <Plugin>
-    <ShortDescription>My SpotBugs Plugin</ShortDescription>
-    <Details>This plugin provides original detectors</Details>
+    <ShortDescription>Possible Generalization Detector</ShortDescription>
+    <Details>This Plugin looks for possibilities to generalize Method Parameters or Local Variables</Details>
   </Plugin>
 
   <Detector class="test.MyDetector">
     <Details>
-      Original detector to detect MY_BUG bug pattern.
+      Detector to detect MY_BUG bug pattern.
     </Details>
   </Detector>
 
   <BugPattern type="MY_BUG">
-    <ShortDescription>Explain bug pattern shortly.</ShortDescription>
+    <ShortDescription>Possible Generalization possible.</ShortDescription>
     <LongDescription>
-      Explain existing problem in code, and how developer should improve their implementation.
+      If you put a more General Type as Method Parameter, you can reuse that code more easily.
     </LongDescription>
     <Details>
 <![CDATA[
@@ -25,5 +25,5 @@
     </Details>
   </BugPattern>
 
-  <BugCode abbrev="MY">My SpotBugs BugCode</BugCode>
+  <BugCode abbrev="MY">Possible Generalization Bugcode</BugCode>
 </MessageCollection>
