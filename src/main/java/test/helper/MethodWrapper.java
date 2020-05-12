@@ -39,6 +39,10 @@ public class MethodWrapper
 				returnType = ClassHelper.GetClassFromString(parameter);
 			}
 		}
+		else
+		{
+			returnType = Void.TYPE;
+		}
 	}
 
 	@Override
