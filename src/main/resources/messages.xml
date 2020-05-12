@@ -13,7 +13,7 @@
     </Details>
   </Detector>
 
-  <BugPattern type="MY_BUG">
+  <BugPattern type="PG">
     <ShortDescription>Possible Generalization possible.</ShortDescription>
     <LongDescription>
       If you put a more General Type as Method Parameter, you can reuse that code more easily.
@@ -22,5 +22,5 @@
     </Details>
   </BugPattern>
 
-  <BugCode abbrev="MY">Possible Generalization Bugcode</BugCode>
+  <BugCode abbrev="PG">Possible Generalization Bugcode</BugCode>
 </MessageCollection>

@@ -94,15 +94,7 @@ public class MyDetector extends OpcodeStackDetector {
                         String clazz = item.getSignature().substring(1, item.getSignature().length() - 1);
                         c = Class.forName(clazz.replace("/", "."));
                     }
-                    parameter.setClazz(c);
-                    parameter.setLineNumber(getMethod().getLineNumberTable().getLineNumberTable()[0].getLineNumber());
-                    if (parametersPerMethod.containsKey(method)) {
-                        parametersPerMethod.get(method).add(parameter);
-                    } else {
-                        List<Parameter> parameters = new ArrayList<>();
-                        parameters.add(parameter);
-                        parametersPerMethod.put(method, parameters);
-                    }
+                    finishCreateParameterAndAddToMap(parameter, c);
                 }
                 LocalVariableTable table = method.getLocalVariableTable();
                 for (int j = i - 1; j < table.getLocalVariableTable().length; j++) {
@@ -117,14 +109,7 @@ public class MyDetector extends OpcodeStackDetector {
                         }
                         Parameter p = new Parameter();
                         p.registerNumber = j;
-                        p.setClazz(c);
-                        if (parametersPerMethod.containsKey(method)) {
-                            parametersPerMethod.get(method).add(p);
-                        } else {
-                            List<Parameter> parameters = new ArrayList<>();
-                            parameters.add(p);
-                            parametersPerMethod.put(method, parameters);
-                        }
+                        finishCreateParameterAndAddToMap(p, c);
                     }
                 }
             }
@@ -132,6 +117,17 @@ public class MyDetector extends OpcodeStackDetector {
         catch (ClassNotFoundException e)
         {
             e.printStackTrace();
+        }
+    }
+
+    private void finishCreateParameterAndAddToMap(Parameter parameter, Class<?> c) {
+        parameter.setClazz(c);
+        if (parametersPerMethod.containsKey(method)) {
+            parametersPerMethod.get(method).add(parameter);
+        } else {
+            List<Parameter> parameters = new ArrayList<>();
+            parameters.add(parameter);
+            parametersPerMethod.put(method, parameters);
         }
     }
 
@@ -255,7 +251,7 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", HIGH_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "PG", HIGH_PRIORITY)
                             .addClassAndMethod(this)
                             .addSourceLine(this, method.getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                     bugReporter.reportBug(bug);
@@ -280,7 +276,7 @@ public class MyDetector extends OpcodeStackDetector {
                 }
                 if (booleans.stream().allMatch(e -> e))
                 {
-                    BugInstance bug = new BugInstance(this, "MY_BUG", HIGH_PRIORITY)
+                    BugInstance bug = new BugInstance(this, "PG", HIGH_PRIORITY)
                             .addClassAndMethod(this)
                             .addSourceLine(this, method.getLineNumberTable().getLineNumberTable()[0].getLineNumber());
                     bugReporter.reportBug(bug);

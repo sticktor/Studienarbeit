@@ -24,7 +24,7 @@ public class MyDetectorTest {
         BugCollection bugCollection = spotbugs.performAnalysis(path);
 
         BugInstanceMatcher bugTypeMatcher = new BugInstanceMatcherBuilder()
-                .bugType("MY_BUG").build();
+                .bugType("PG").build();
         assertThat(bugCollection, containsExactly(0, bugTypeMatcher));
     }
 
@@ -34,7 +34,7 @@ public class MyDetectorTest {
         BugCollection bugCollection = spotbugs.performAnalysis(path);
 
         BugInstanceMatcher bugTypeMatcher = new BugInstanceMatcherBuilder()
-                .bugType("MY_BUG").build();
+                .bugType("PG").build();
         assertThat(bugCollection, containsExactly(1, bugTypeMatcher));
     }
 }

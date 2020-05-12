@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.classfile.ClassDescriptor;
 import edu.umd.cs.findbugs.classfile.FieldDescriptor;
 
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 public class FieldWrapper {
 	private Class<?> declaringClass;
@@ -29,7 +30,7 @@ public class FieldWrapper {
 		if (obj instanceof Field) {
 			Field other = (Field)obj;
 			return (getDeclaringClass() == other.getDeclaringClass())
-					&& (getName() == other.getName())
+					&& (Objects.equals(getName(), other.getName()))
 					&& (getType() == other.getType());
 		}
 		return false;
@@ -39,7 +40,7 @@ public class FieldWrapper {
 	{
 		if (other != null) {
 			return (getDeclaringClass() == other.getDeclaringClass())
-					&& (getName() == other.getName())
+					&& (Objects.equals(getName(), other.getName()))
 					&& (getType() == other.getType());
 		}
 		return false;

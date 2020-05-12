@@ -6,7 +6,6 @@ public class Parameter
 {
     public int registerNumber;
     private Class<?> clazz;
-    private int lineNumber;
 
     @Override
     public boolean equals(Object o)
@@ -24,21 +23,13 @@ public class Parameter
         return Objects.hash(registerNumber, clazz);
     }
 
-    public Class getClazz()
+    public Class<?> getClazz()
     {
         return clazz;
     }
 
-    public void setClazz(Class clazz)
+    public void setClazz(Class<?> clazz)
     {
         this.clazz = clazz;
-    }
-
-    public int getLineNumber() {
-        return lineNumber;
-    }
-
-    public void setLineNumber(int lineNumber) {
-        this.lineNumber = lineNumber;
     }
 }
