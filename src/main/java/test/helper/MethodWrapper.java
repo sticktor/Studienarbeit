@@ -6,6 +6,9 @@ import edu.umd.cs.findbugs.classfile.MethodDescriptor;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+/***
+ * Wrapper for Method from Java and Method from Descriptions by SpotBugs
+ */
 public class MethodWrapper
 {
 	private Class<?> declaringClass;
@@ -13,6 +16,10 @@ public class MethodWrapper
 	private Class<?>[] parameterTypes;
 	private String name;
 
+	/***
+	 * Create Wrapper from Method from Java
+	 * @param method to create Wrapper from
+	 */
 	public MethodWrapper(Method method) {
 		this.declaringClass = method.getDeclaringClass();
 		this.returnType = method.getReturnType();
@@ -20,6 +27,12 @@ public class MethodWrapper
 		this.name = method.getName();
 	}
 
+	/***
+	 * Create Wrapper for Method from Descriptions by SpotBugs
+	 * @param classDescriptor the descriptor of the declaring class
+	 * @param methodDescriptor the descriptor of the method
+	 * @throws ClassNotFoundException when something happened that shouldnt happen
+	 */
 	public MethodWrapper(ClassDescriptor classDescriptor, MethodDescriptor methodDescriptor) throws ClassNotFoundException
 	{
 		this.declaringClass = Class.forName(classDescriptor.getDottedClassName());

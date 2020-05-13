@@ -2,6 +2,9 @@ package test.helper;
 
 import java.util.Objects;
 
+/***
+ * Class to store Parameters from Methods or Local Variables
+ */
 public class Parameter
 {
     public int registerNumber;

@@ -10,6 +10,9 @@ import test.helper.*;
 
 import java.util.*;
 
+/***
+ * This class is the main class for this SpotBugs Plugin to scan for possible Generalization
+ */
 public class MyDetector extends OpcodeStackDetector {
     private final BugReporter bugReporter;
 
@@ -23,6 +26,12 @@ public class MyDetector extends OpcodeStackDetector {
     static OpcodeStack.Item item;
     static int paras;
     static boolean manuallyInvoked = false;
+
+    /***
+     * Gets called when an Opcode is seen
+     * Main Logic Method
+     * @param seen the seen Opcode
+     */
     @Override
     public void sawOpcode(int seen) {
         try {
@@ -33,17 +42,6 @@ public class MyDetector extends OpcodeStackDetector {
                     counter++;
                 }
                 item = getStack().getStackItem(counter);
-                //if (method.isStatic())
-                //{
-                //    if (item.getRegisterNumber() >= paras)
-                //    {
-                //        sawMethod();
-                //    }
-                //}
-                //else if (item.getRegisterNumber() > paras)
-                //{
-                //    sawMethod();
-                //}
                 sawMethod();
             } else if (seen == Const.PUTFIELD) {
                 item = getStack().getStackItem(1);
@@ -131,7 +129,10 @@ public class MyDetector extends OpcodeStackDetector {
         }
     }
 
-
+    /**
+     * Gets called when a method is seen.
+     * Adds a possible MethodUsage to the UsagesMap
+     */
     @Override
     public void sawMethod()
     {
@@ -181,6 +182,10 @@ public class MyDetector extends OpcodeStackDetector {
         manuallyInvoked = false;
     }
 
+    /**
+     * Gets called when a field is seen.
+     * Adds a possible FieldUsage to the UsagesMap
+     */
     @Override
     public void sawField()
     {
@@ -222,6 +227,10 @@ public class MyDetector extends OpcodeStackDetector {
         item = null;
     }
 
+    /***
+     * Scan a Method of the Map for errors
+     * @param method The method to scan for errors
+     */
     public void onLeaveMethod(Method method)
     {
         HashMap<Parameter, ArrayList<Usage>> occurences = UsagesPerAttributePerMethod.get(method);

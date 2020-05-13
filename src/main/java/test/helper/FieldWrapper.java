@@ -6,11 +6,18 @@ import edu.umd.cs.findbugs.classfile.FieldDescriptor;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
+/***
+ * Wrapper for Field from Java and Field from Descriptions by SpotBugs
+ */
 public class FieldWrapper {
 	private Class<?> declaringClass;
 	private String name;
 	private Class<?> type;
 
+	/***
+	 * Create Wrapper from Field from Java
+	 * @param field to create Wrapper from
+	 */
 	public FieldWrapper(Field field)
 	{
 		declaringClass = field.getDeclaringClass();
@@ -18,6 +25,12 @@ public class FieldWrapper {
 		type = field.getType();
 	}
 
+	/***
+	 * Create Wrapper for Field from Descriptions by SpotBugs
+	 * @param classDescriptor the descriptor of the declaring class
+	 * @param fieldDescriptor the descriptor of the field
+	 * @throws ClassNotFoundException when something happened that shouldnt happen
+	 */
 	public FieldWrapper(ClassDescriptor classDescriptor, FieldDescriptor fieldDescriptor) throws ClassNotFoundException {
 		this.declaringClass = Class.forName(classDescriptor.getDottedClassName());
 

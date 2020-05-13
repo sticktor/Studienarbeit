@@ -1,5 +1,8 @@
 package test.helper;
 
+/***
+ * Helper class to tune down some code lines
+ */
 public class ClassHelper {
 	private ClassHelper(){}
 

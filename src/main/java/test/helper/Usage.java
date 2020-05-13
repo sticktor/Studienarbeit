@@ -1,8 +1,8 @@
 package test.helper;
 
-import edu.umd.cs.findbugs.classfile.ClassDescriptor;
-import edu.umd.cs.findbugs.classfile.MethodDescriptor;
-
+/***
+ * Marker Interface to use MethodUsage and FieldUsage interchangeably
+ */
 public interface Usage
 {
 
