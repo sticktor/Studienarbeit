@@ -2,14 +2,13 @@ package test;
 
 public class Tester implements ITester
 {
-    String x;
     @Override
     public void doSmth()
     {
         System.out.println("hey");
     }
 
-    public void malleBois()
+    public void donothing()
     {
         System.out.println("asjnfasnf");
     }

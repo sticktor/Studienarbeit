@@ -16,9 +16,7 @@ class GoodCase {
         //map.put("key", "value");
         //tm.clear();
         map.doSmth();
-        map.malleBois();
-        map.x = "sda";
-        String f = map.x;
+        map.donothing();
         meth();
         //map2.clear();
         //map.size();
